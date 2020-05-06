@@ -49,8 +49,8 @@ def stock_zh_kcb_spot() -> pd.DataFrame:
         res = requests.get(
             zh_sina_kcb_stock_url,
             params=zh_sina_kcb_stock_payload)
-        data_json = demjson.decode(res.text)
-        big_df = big_df.append(pd.DataFrame(data_json), ignore_index=True)
+        data_json = res.text
+        big_df = big_df.append(pd.read_json(data_json, dtype={'code':object}), ignore_index=True)
     return big_df
 
 
@@ -85,15 +85,15 @@ def stock_zh_kcb_daily(symbol: str = "sh688399", adjust: str = "") -> pd.DataFra
     1  1900-01-01  1.0000000000000000
     """
     res = requests.get(zh_sina_kcb_stock_hist_url.format(symbol, datetime.datetime.now().strftime("%Y_%m_%d"), symbol))
-    data_json = demjson.decode(res.text[res.text.find("["):res.text.rfind("]")+1])
-    data_df = pd.DataFrame(data_json)
+    data_json = res.text[res.text.find("["):res.text.rfind("]")+1]
+    data_df = pd.read_json(data_json, dtype={'code':object})
     data_df.index = pd.to_datetime(data_df["d"])
     data_df.index.name = "date"
     del data_df["d"]
 
     r = requests.get(zh_sina_kcb_stock_amount_url.format(symbol, symbol))
-    amount_data_json = demjson.decode(r.text[r.text.find("["): r.text.rfind("]")+1])
-    amount_data_df = pd.DataFrame(amount_data_json)
+    amount_data_json = r.text[r.text.find("["): r.text.rfind("]")+1]
+    amount_data_df = pd.read_json(amount_data_json, dtype={'code':object})
     amount_data_df.index = pd.to_datetime(amount_data_df.date)
     del amount_data_df["date"]
     temp_df = pd.merge(data_df, amount_data_df, left_index=True, right_index=True, how="left")

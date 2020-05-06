@@ -6,6 +6,7 @@ Desc: 新浪财经-港股-实时行情数据和历史行情数据(包含前复�
 """
 import requests
 import demjson
+import json
 import pandas as pd
 import execjs
 
@@ -27,9 +28,9 @@ def stock_hk_spot() -> pd.DataFrame:
     res = requests.get(
         hk_sina_stock_list_url,
         params=hk_sina_stock_dict_payload)
-    data_json = [demjson.decode(tt) for tt in
-                 [item + "}" for item in res.text[1:-1].split("},") if not item.endswith("}")]]
-    data_df = pd.DataFrame(data_json)
+    data_json = json.dumps([demjson.decode(tt) for tt in
+                 [item + "}" for item in res.text[1:-1].split("},") if not item.endswith("}")]])
+    data_df = pd.read_json(data_json, dtype={'symbol':object})
     data_df = data_df[["symbol",
                        "name",
                        "engname",

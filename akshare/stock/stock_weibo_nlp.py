@@ -79,7 +79,7 @@ def stock_js_weibo_report(time_period: str = "CNHOUR2") -> pd.DataFrame:
     }
 
     r = requests.get(url, headers=headers, data=payload)
-    return pd.DataFrame(r.json()["data"])
+    return pd.read_json(json.dumps(r.json()["data"]))
 
 
 if __name__ == '__main__':

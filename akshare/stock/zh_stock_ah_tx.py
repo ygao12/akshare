@@ -37,21 +37,16 @@ def stock_zh_ah_spot():
         hk_payload.update({"reqPage": i})
         res = requests.get(hk_url, params=hk_payload, headers=hk_headers)
         data_json = demjson.decode(res.text[res.text.find("{"): res.text.rfind("}") + 1])
-        big_df = big_df.append(pd.DataFrame(data_json["data"]["page_data"]).iloc[:, 0].str.split("~", expand=True), ignore_index=True)
-    big_df.columns = ["代码", "名称", "最新价", "涨跌幅", "涨跌额", "买入", "卖出", "成交量", "成交额", "今开", "昨收", "最高", "最低"]
+        data_json = json.dumps(data_json["data"]["page_data"])
+        big_df = big_df.append(pd.read_json(data_json).iloc[:, 0].str.split("~", expand=True), ignore_index=True)
+    # big_df.columns = ["代码", "名称", "最新价", "涨跌幅", "涨跌额", "买入", "卖出", "成交量", "成交额", "今开", "昨收", "最高", "最低"]
+    big_df.columns = ["code", "name", "trade", "changepercent", "pricechange", "buy", "sale", "volume", "amount", "open", "settlement", "high", "low"]
     return big_df
 
 
 def stock_zh_ah_name():
-    big_df = pd.DataFrame()
-    page_count = get_zh_stock_ah_page_count() + 1
-    for i in tqdm(range(1, page_count)):
-        hk_payload.update({"reqPage": i})
-        res = requests.get(hk_url, params=hk_payload, headers=hk_headers)
-        data_json = demjson.decode(res.text[res.text.find("{"): res.text.rfind("}") + 1])
-        big_df = big_df.append(pd.DataFrame(data_json["data"]["page_data"]).iloc[:, 0].str.split("~", expand=True), ignore_index=True)
-    big_df.columns = ["代码", "名称", "最新价", "涨跌幅", "涨跌额", "买入", "卖出", "成交量", "成交额", "今开", "昨收", "最高", "最低"]
-    code_name_dict = dict(zip(big_df["代码"], big_df["名称"]))
+    big_df = stock_zh_ah_spot()
+    code_name_dict = dict(zip(big_df["code"], big_df["name"]))
     return code_name_dict
 
 
@@ -64,12 +59,15 @@ def stock_zh_ah_daily(symbol="02318", start_year="2000", end_year="2019"):
         hk_stock_payload_copy.update({"r": random.random()})
         res = requests.get(hk_stock_url, params=hk_stock_payload_copy, headers=hk_stock_headers)
         data_json = demjson.decode(res.text[res.text.find("{"): res.text.rfind("}") + 1])
+        data_json = json.dumps(data_json["data"][f"hk{symbol}"]["hfqday"])
         try:
-            temp_df = pd.DataFrame(data_json["data"][f"hk{symbol}"]["hfqday"])
+            temp_df = pd.read_json(data_json)
         except:
             continue
-        temp_df.columns = ["日期", "开盘", "收盘", "最高", "最低", "成交量", "_", "_", "_"]
-        temp_df = temp_df[["日期", "开盘", "收盘", "最高", "最低", "成交量"]]
+        temp_df.columns = ["date", "open", "close", "high", "low", "volume", "_", "_", "_"]
+        temp_df = temp_df[["date", "open", "close", "high", "low", "volume"]]
+        # temp_df.columns = ["日期", "开盘", "收盘", "最高", "最低", "成交量", "_", "_", "_"]
+        # temp_df = temp_df[["日期", "开盘", "收盘", "最高", "最低", "成交量"]]
         # print("正在采集{}第{}年的数据".format(symbol, year))
         big_df = big_df.append(temp_df, ignore_index=True)
     return big_df

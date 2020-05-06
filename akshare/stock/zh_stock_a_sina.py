@@ -87,8 +87,8 @@ def stock_zh_a_spot() -> pd.DataFrame:
         res = requests.get(
             zh_sina_a_stock_url,
             params=zh_sina_stock_payload_copy)
-        data_json = demjson.decode(res.text)
-        big_df = big_df.append(pd.DataFrame(data_json), ignore_index=True)
+        data_json = res.text
+        big_df = big_df.append(pd.read_json(data_json, dtype={'code':object}), ignore_index=True)
     return big_df
 
 
@@ -114,8 +114,8 @@ def stock_zh_a_daily(symbol: str = "sh600582", adjust: str = "") -> pd.DataFrame
     data_df = data_df.astype("float")
 
     r = requests.get(zh_sina_a_stock_amount_url.format(symbol, symbol))
-    amount_data_json = demjson.decode(r.text[r.text.find("["): r.text.rfind("]") + 1])
-    amount_data_df = pd.DataFrame(amount_data_json)
+    amount_data_json = r.text[r.text.find("["): r.text.rfind("]") + 1]
+    amount_data_df = pd.read_json(amount_data_json, dtype={'code':object})
     amount_data_df.index = pd.to_datetime(amount_data_df.date)
     del amount_data_df["date"]
     temp_df = pd.merge(data_df, amount_data_df, left_index=True, right_index=True, how="left")

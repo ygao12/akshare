@@ -64,8 +64,8 @@ def get_us_stock_name() -> pd.DataFrame:
         res = requests.get(
             us_sina_stock_list_url.format(dict_list), params=us_sina_stock_dict_payload
         )
-        data_json = json.loads(res.text[res.text.find("({") + 1: res.text.rfind(");")])
-        big_df = big_df.append(pd.DataFrame(data_json["data"]), ignore_index=True)
+        data_json = json.dumps(json.loads(res.text[res.text.find("({") + 1: res.text.rfind(");")])['data'])
+        big_df = big_df.append(pd.read_json(data_json), ignore_index=True)
     return big_df[["name", "cname", "symbol"]]
 
 
@@ -88,8 +88,8 @@ def stock_us_spot() -> pd.DataFrame:
         res = requests.get(
             us_sina_stock_list_url.format(dict_list), params=us_sina_stock_dict_payload
         )
-        data_json = json.loads(res.text[res.text.find("({") + 1 : res.text.rfind(");")])
-        big_df = big_df.append(pd.DataFrame(data_json["data"]), ignore_index=True)
+        data_json = json.dumps(json.loads(res.text[res.text.find("({") + 1 : res.text.rfind(");")])['data'])
+        big_df = big_df.append(pd.read_json(data_json), ignore_index=True)
     return big_df
 
 
